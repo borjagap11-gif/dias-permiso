@@ -1,0 +1,17 @@
+{
+  "short_name": "MisDías",
+  "name": "Gestor de Días de Permiso",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2370/2370264.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#2563eb",
+  "display": "standalone",
+  "scope": "./",
+  "theme_color": "#2563eb"
+}
