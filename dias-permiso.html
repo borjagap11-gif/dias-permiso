@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1A1A2E">
+<title>Días de Permiso · 11CIAPAC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600;700;900&family=Barlow+Condensed:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --do: #2563EB; --da: #059669; --dpp: #7C3AED; --ap: #D97706; --po: #DC2626;
+    --bg: #0F0F1A; --surface: #1C1C2E; --surface2: #252538; --border: #2E2E45;
+    --text: #F0F0FF; --muted: #6B6B8A; --accent: #4FC3F7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    font-family: 'Barlow', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    max-width: 480px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+  }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(180deg, #1A1A2E 0%, #0F0F1A 100%);
+    padding: 16px 16px 0;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+  .header-brand { }
+  .brand-title { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 900; letter-spacing: 3px; color: var(--text); }
+  .brand-sub { font-size: 10px; letter-spacing: 4px; color: var(--muted); margin-top: 1px; }
+  .header-totals { display: flex; gap: 16px; }
+  .total-item { text-align: center; }
+  .total-num { font-family: 'Barlow Condensed', sans-serif; font-size: 26px; font-weight: 900; color: var(--accent); line-height: 1; }
+  .total-num.spent { color: var(--muted); }
+  .total-label { font-size: 9px; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; }
+
+  /* TABS */
+  .tabs { display: flex; gap: 3px; overflow-x: auto; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    flex-shrink: 0;
+    border: none;
+    border-radius: 8px 8px 0 0;
+    padding: 9px 16px 10px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    color: var(--muted);
+    background: transparent;
+    transition: all 0.15s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .tab.active { color: #fff; }
+  .tab-badge {
+    font-size: 11px; font-weight: 900;
+    background: rgba(255,255,255,0.2);
+    border-radius: 10px; padding: 1px 6px;
+  }
+  .tab[data-tipo="AP"].active { background: var(--ap); }
+  .tab[data-tipo="PO"].active { background: var(--po); }
+  .tab[data-tipo="DO"].active { background: var(--do); }
+  .tab[data-tipo="DA"].active { background: var(--da); }
+  .tab[data-tipo="DPP"].active { background: var(--dpp); }
+
+  /* BODY */
+  .body { flex: 1; overflow-y: auto; padding: 14px 12px; scrollbar-width: none; }
+  .body::-webkit-scrollbar { display: none; }
+
+  /* SALDO CARD */
+  .saldo-card {
+    background: var(--surface);
+    border-radius: 0 16px 16px 16px;
+    padding: 22px 20px 18px;
+    margin-bottom: 12px;
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .saldo-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 4px;
+  }
+  .saldo-card[data-tipo="AP"]::before { background: var(--ap); }
+  .saldo-card[data-tipo="PO"]::before { background: var(--po); }
+  .saldo-desc { font-size: 10px; letter-spacing: 2px; color: var(--muted); font-weight: 700; margin-bottom: 12px; }
+  .saldo-big { display: flex; align-items: baseline; gap: 6px; margin-bottom: 4px; }
+  .saldo-num { font-family: 'Barlow Condensed', sans-serif; font-size: 88px; font-weight: 900; line-height: 1; }
+  .saldo-of { font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 700; color: var(--muted); }
+  .saldo-label { font-size: 12px; color: var(--muted); margin-bottom: 18px; }
+  .bar-bg { background: var(--border); border-radius: 6px; height: 6px; margin-bottom: 16px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 6px; transition: width 0.5s cubic-bezier(.4,0,.2,1); }
+  .dot-grid { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 14px; }
+  .dot { width: 20px; height: 20px; border-radius: 5px; transition: background 0.3s; }
+  .dot.used { opacity: 0.2; }
+  .saldo-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+
+  /* ACTION BUTTONS */
+  .action-row { display: flex; gap: 10px; margin-bottom: 16px; }
+  .btn-action {
+    flex: 1; border: none; border-radius: 12px; padding: 14px 0;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 700;
+    letter-spacing: 1px; cursor: pointer; display: flex; align-items: center;
+    justify-content: center; gap: 8px; transition: opacity 0.15s; color: #fff;
+  }
+  .btn-action:disabled { opacity: 0.4; }
+  .btn-outline {
+    flex: 1; border-radius: 12px; padding: 14px 0;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 700;
+    letter-spacing: 1px; cursor: pointer; display: flex; align-items: center;
+    justify-content: center; gap: 8px; background: transparent;
+    border: 2px solid; transition: opacity 0.15s;
+  }
+
+  /* SECTION TITLE */
+  .section-title { font-size: 10px; letter-spacing: 2.5px; color: var(--muted); font-weight: 700; margin-bottom: 8px; margin-top: 4px; }
+
+  /* LOG CARD */
+  .log-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 14px; margin-bottom: 8px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .log-motivo { font-size: 14px; font-weight: 600; color: var(--text); }
+  .log-fecha { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .btn-devolver {
+    background: none; border: none; color: var(--muted); font-size: 20px;
+    cursor: pointer; padding: 4px 8px; flex-shrink: 0;
+  }
+
+  /* REGISTRO CARDS */
+  .reg-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;
+    cursor: pointer; border-left-width: 4px; transition: transform 0.1s;
+    position: relative;
+  }
+  .reg-card:active { transform: scale(0.98); }
+  .gastado-tag {
+    display: inline-block; background: var(--border); color: var(--muted);
+    border-radius: 5px; padding: 2px 8px; font-size: 9px; font-weight: 700;
+    letter-spacing: 1.5px; margin-bottom: 6px;
+  }
+  .reg-motivo { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .reg-dates { display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: var(--muted); }
+  .reg-card.gastado { opacity: 0.45; }
+
+  /* EMPTY */
+  .empty { text-align: center; color: var(--muted); margin-top: 60px; font-size: 14px; line-height: 1.9; white-space: pre-line; }
+
+  /* FAB */
+  .fab {
+    position: fixed; bottom: 24px; right: 20px;
+    width: 58px; height: 58px; border-radius: 29px;
+    background: linear-gradient(135deg, var(--accent), #0284C7);
+    color: #fff; font-size: 32px; font-weight: 300; border: none;
+    box-shadow: 0 6px 20px rgba(79,195,247,0.35); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; z-index: 20;
+  }
+
+  /* OVERLAY / PANEL */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    z-index: 50; display: flex; align-items: flex-end; justify-content: center;
+    animation: fadeIn 0.2s;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .panel {
+    background: var(--surface); border-radius: 24px 24px 0 0;
+    padding: 24px 20px 36px; width: 100%; max-width: 480px;
+    border-top: 1px solid var(--border);
+    animation: slideUp 0.25s cubic-bezier(.4,0,.2,1);
+    max-height: 92dvh; overflow-y: auto;
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .panel-title {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 900;
+    letter-spacing: 1px; margin-bottom: 20px; color: var(--text);
+  }
+  .panel-handle {
+    width: 40px; height: 4px; background: var(--border); border-radius: 2px;
+    margin: 0 auto 20px;
+  }
+
+  /* FORM */
+  label { display: block; font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--muted); margin-bottom: 6px; margin-top: 16px; }
+  label:first-of-type { margin-top: 0; }
+  input, textarea, select {
+    width: 100%; padding: 12px 14px; border-radius: 10px;
+    border: 1.5px solid var(--border); background: var(--bg);
+    color: var(--text); font-family: 'Barlow', sans-serif; font-size: 15px;
+    outline: none; resize: vertical;
+  }
+  input:focus, textarea:focus { border-color: var(--accent); }
+  input[type=date] { -webkit-appearance: none; appearance: none; color-scheme: dark; }
+  .optional { font-weight: 400; color: var(--muted); font-size: 10px; }
+
+  /* BUTTONS */
+  .btn-primary {
+    width: 100%; padding: 14px; border-radius: 12px; border: none;
+    color: #fff; font-family: 'Barlow Condensed', sans-serif;
+    font-size: 17px; font-weight: 700; letter-spacing: 1px; cursor: pointer; margin-top: 20px;
+  }
+  .btn-secondary {
+    width: 100%; padding: 14px; border-radius: 12px;
+    border: 1.5px solid var(--border); background: transparent;
+    color: var(--muted); font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px; font-weight: 700; letter-spacing: 1px; cursor: pointer; margin-top: 8px;
+  }
+  .btn-danger {
+    width: 100%; padding: 14px; border-radius: 12px; border: none;
+    background: rgba(220,38,38,0.15); color: #F87171;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px; font-weight: 700; letter-spacing: 1px; cursor: pointer; margin-top: 8px;
+  }
+
+  /* DETAIL */
+  .detail-motivo { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 20px; line-height: 1.3; }
+  .detail-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .detail-key { font-size: 11px; letter-spacing: 1px; color: var(--muted); font-weight: 700; }
+  .detail-val { font-size: 14px; font-weight: 600; color: var(--text); }
+
+  /* CONFIRM */
+  .confirm-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+    z-index: 60; display: flex; align-items: center; justify-content: center; padding: 24px;
+  }
+  .confirm-box {
+    background: var(--surface2); border-radius: 20px; padding: 28px 24px;
+    width: 100%; max-width: 320px; border: 1px solid var(--border);
+    animation: fadeIn 0.15s;
+  }
+  .confirm-title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+  .confirm-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+
+  /* TOAST */
+  .toast {
+    position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+    padding: 10px 22px; border-radius: 20px; font-size: 13px; font-weight: 600;
+    color: #fff; z-index: 100; box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    white-space: nowrap; animation: fadeIn 0.2s;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div class="header-brand">
+      <div class="brand-title">DÍAS PERMISO</div>
+      <div class="brand-sub">11CIAPAC</div>
+    </div>
+    <div class="header-totals">
+      <div class="total-item">
+        <div class="total-num" id="total-disp">0</div>
+        <div class="total-label">disponibles</div>
+      </div>
+      <div class="total-item">
+        <div class="total-num spent" id="total-gast">0</div>
+        <div class="total-label">gastados</div>
+      </div>
+    </div>
+  </div>
+  <div class="tabs" id="tabs"></div>
+</div>
+
+<div class="body" id="body"></div>
+
+<div id="overlay-container"></div>
+<div id="toast-container"></div>
+
+<script>
+const TIPOS_SALDO = ['AP','PO'];
+const TIPOS_REG = ['DO','DA','DPP'];
+const CFG = {
+  AP:  { color: '#D97706', css: '--ap',  desc: 'ASUNTO PERSONAL' },
+  PO:  { color: '#DC2626', css: '--po',  desc: 'PERMISO OFICIAL' },
+  DO:  { color: '#2563EB', css: '--do',  desc: 'DÍA DE OBLIGACIÓN' },
+  DA:  { color: '#059669', css: '--da',  desc: 'DÍA DE ASUNTOS' },
+  DPP: { color: '#7C3AED', css: '--dpp', desc: 'DÍA POR PERMISO' },
+};
+
+// --- STATE ---
+let state = {
+  tab: 'AP',
+  saldos: { AP: { total: 7, gastados: 2 }, PO: { total: 22, gastados: 0 } },
+  registros: [],
+};
+
+function load() {
+  try {
+    const s = localStorage.getItem('dp-saldos');
+    const r = localStorage.getItem('dp-registros');
+    if (s) state.saldos = JSON.parse(s);
+    if (r) state.registros = JSON.parse(r);
+  } catch(_) {}
+}
+
+function save() {
+  localStorage.setItem('dp-saldos', JSON.stringify(state.saldos));
+  localStorage.setItem('dp-registros', JSON.stringify(state.registros));
+}
+
+function today() { return new Date().toISOString().slice(0,10); }
+function fmt(d) {
+  if (!d) return '—';
+  const [y,m,day] = d.split('-');
+  return `${day}/${m}/${y}`;
+}
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+
+// --- TOAST ---
+function toast(msg, ok=true) {
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.style.background = ok ? '#065F46' : '#7F1D1D';
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 2500);
+}
+
+// --- RENDER ---
+function render() {
+  renderTabs();
+  renderBody();
+  renderTotals();
+}
+
+function renderTotals() {
+  const allDisp = Object.entries(state.saldos).reduce((a,[,v]) => a + (v.total - v.gastados), 0)
+    + state.registros.filter(r => TIPOS_REG.includes(r.tipo) && !r.fechaGastado).length;
+  const allGast = Object.entries(state.saldos).reduce((a,[,v]) => a + v.gastados, 0)
+    + state.registros.filter(r => r.fechaGastado).length;
+  document.getElementById('total-disp').textContent = allDisp;
+  document.getElementById('total-gast').textContent = allGast;
+}
+
+function renderTabs() {
+  const tabs = document.getElementById('tabs');
+  tabs.innerHTML = ['AP','PO','DO','DA','DPP'].map(t => {
+    const active = state.tab === t;
+    let badge = '';
+    if (TIPOS_SALDO.includes(t)) {
+      const disp = state.saldos[t].total - state.saldos[t].gastados;
+      badge = `<span class="tab-badge">${disp}</span>`;
+    }
+    return `<button class="tab${active?' active':''}" data-tipo="${t}" onclick="setTab('${t}')">${t}${badge}</button>`;
+  }).join('');
+}
+
+function setTab(t) {
+  state.tab = t;
+  render();
+}
+
+function renderBody() {
+  const body = document.getElementById('body');
+  const t = state.tab;
+  if (TIPOS_SALDO.includes(t)) {
+    body.innerHTML = renderSaldo(t);
+  } else {
+    body.innerHTML = renderRegistros(t);
+  }
+}
+
+function renderSaldo(t) {
+  const s = state.saldos[t];
+  const disp = s.total - s.gastados;
+  const pct = s.total > 0 ? (disp / s.total) * 100 : 0;
+  const color = CFG[t].color;
+  const logs = state.registros.filter(r => r.tipo === t).sort((a,b) => (b.fecha||'').localeCompare(a.fecha||''));
+
+  const dots = Array.from({length: s.total}, (_,i) =>
+    `<div class="dot${i >= disp ? ' used' : ''}" style="background:${color}"></div>`
+  ).join('');
+
+  const logsHtml = logs.length === 0 ? '' : `
+    <div class="section-title">HISTORIAL DE GASTOS</div>
+    ${logs.map(l => `
+      <div class="log-card">
+        <div>
+          <div class="log-motivo">${esc(l.motivo)}</div>
+          <div class="log-fecha">${fmt(l.fecha)}</div>
+        </div>
+        <button class="btn-devolver" onclick="confirmarDevolver('${l.id}')" title="Devolver día">↩</button>
+      </div>
+    `).join('')}
+  `;
+
+  return `
+    <div class="saldo-card" data-tipo="${t}">
+      <div class="saldo-desc">${CFG[t].desc}</div>
+      <div class="saldo-big">
+        <span class="saldo-num" style="color:${disp===0?'var(--muted)':color}">${disp}</span>
+        <span class="saldo-of">/ ${s.total}</span>
+      </div>
+      <div class="saldo-label">días disponibles</div>
+      <div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
+      <div class="dot-grid">${dots}</div>
+      <div class="saldo-meta"><span>${s.gastados} gastado${s.gastados!==1?'s':''}</span><span>${s.total} total anual</span></div>
+    </div>
+    <div class="action-row">
+      <button class="btn-action" style="background:${color}" onclick="abrirGastarSaldo('${t}')"${disp===0?' disabled':''}>− Gastar día</button>
+      <button class="btn-outline" style="border-color:${color};color:${color}" onclick="abrirAjuste('${t}')">⚙ Ajustar</button>
+    </div>
+    ${logsHtml}
+    <div style="height:30px"></div>
+  `;
+}
+
+function renderRegistros(t) {
+  const regs = state.registros.filter(r => r.tipo === t).sort((a,b) => {
+    if (!a.fechaGastado && b.fechaGastado) return -1;
+    if (a.fechaGastado && !b.fechaGastado) return 1;
+    return (b.fechaConseguido||'').localeCompare(a.fechaConseguido||'');
+  });
+  const color = CFG[t].color;
+
+  const lista = regs.length === 0
+    ? `<div class="empty">Sin días de ${t} aún.\nPulsa + para añadir uno.</div>`
+    : regs.map(r => {
+        const g = !!r.fechaGastado;
+        return `
+          <div class="reg-card${g?' gastado':''}" style="border-left-color:${color}" onclick="abrirDetalle('${r.id}')">
+            ${g ? '<span class="gastado-tag">GASTADO</span>' : ''}
+            <div class="reg-motivo">${esc(r.motivo)}</div>
+            <div class="reg-dates">
+              <span>📅 Conseguido: ${fmt(r.fechaConseguido)}</span>
+              ${r.fechaGastado ? `<span>💸 Gastado: ${fmt(r.fechaGastado)}</span>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+  return `
+    ${lista}
+    <div style="height:80px"></div>
+    <button class="fab" onclick="abrirNuevoRegistro()">+</button>
+  `;
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// --- OVERLAYS ---
+function overlay(html) {
+  const c = document.getElementById('overlay-container');
+  c.innerHTML = `<div class="overlay" id="overlay" onclick="closeOnBg(event)">${html}</div>`;
+}
+function closeOverlay() {
+  document.getElementById('overlay-container').innerHTML = '';
+}
+function closeOnBg(e) {
+  if (e.target.id === 'overlay') closeOverlay();
+}
+
+// GASTAR SALDO
+function abrirGastarSaldo(t) {
+  const color = CFG[t].color;
+  overlay(`
+    <div class="panel">
+      <div class="panel-handle"></div>
+      <div class="panel-title">Gastar día de ${t}</div>
+      <label>MOTIVO</label>
+      <textarea id="f-motivo" rows="3" placeholder="Ej: Libre disposición, gestiones, boda..."></textarea>
+      <label>FECHA</label>
+      <input type="date" id="f-fecha" value="${today()}">
+      <button class="btn-primary" style="background:${color}" onclick="confirmarGastarSaldo('${t}')">CONFIRMAR GASTO</button>
+      <button class="btn-secondary" onclick="closeOverlay()">CANCELAR</button>
+    </div>
+  `);
+}
+
+function confirmarGastarSaldo(t) {
+  const motivo = document.getElementById('f-motivo').value.trim();
+  const fecha = document.getElementById('f-fecha').value;
+  if (!motivo) { toast('Escribe un motivo', false); return; }
+  const s = state.saldos[t];
+  if (s.gastados >= s.total) { toast('No quedan días disponibles', false); return; }
+  state.saldos[t].gastados++;
+  state.registros.unshift({ id: uid(), tipo: t, motivo, fecha });
+  save(); closeOverlay(); render();
+  toast(`Día de ${t} gastado ✓`);
+}
+
+// AJUSTAR SALDO
+function abrirAjuste(t) {
+  const s = state.saldos[t];
+  const color = CFG[t].color;
+  overlay(`
+    <div class="panel">
+      <div class="panel-handle"></div>
+      <div class="panel-title">Ajustar saldo de ${t}</div>
+      <label>TOTAL DÍAS ANUALES</label>
+      <input type="number" id="f-total" value="${s.total}" min="0">
+      <label>DÍAS YA GASTADOS</label>
+      <input type="number" id="f-gastados" value="${s.gastados}" min="0">
+      <button class="btn-primary" style="background:${color}" onclick="confirmarAjuste('${t}')">GUARDAR</button>
+      <button class="btn-secondary" onclick="closeOverlay()">CANCELAR</button>
+    </div>
+  `);
+}
+
+function confirmarAjuste(t) {
+  const total = parseInt(document.getElementById('f-total').value);
+  const gastados = parseInt(document.getElementById('f-gastados').value);
+  if (isNaN(total)||isNaN(gastados)||total<0||gastados<0) { toast('Valores no válidos',false); return; }
+  if (gastados > total) { toast('Gastados no puede superar el total',false); return; }
+  state.saldos[t] = { total, gastados };
+  // Sincronizar logs: si hay más logs que gastados, eliminar los más antiguos
+  const logs = state.registros.filter(r => r.tipo === t);
+  if (logs.length > gastados) {
+    const sorted = [...logs].sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
+    const toRemove = sorted.slice(0, logs.length - gastados).map(r=>r.id);
+    state.registros = state.registros.filter(r => !toRemove.includes(r.id));
+  }
+  save(); closeOverlay(); render();
+  toast('Saldo actualizado ✓');
+}
+
+// DEVOLVER DÍA
+function confirmarDevolver(id) {
+  const confirm = document.createElement('div');
+  confirm.className = 'confirm-overlay';
+  confirm.innerHTML = `
+    <div class="confirm-box">
+      <div class="confirm-title">¿Devolver este día?</div>
+      <div class="confirm-sub">Se sumará 1 día disponible de nuevo.</div>
+      <button class="btn-primary" style="background:var(--accent)" onclick="ejecutarDevolver('${id}')">DEVOLVER DÍA</button>
+      <button class="btn-secondary" onclick="this.closest('.confirm-overlay').remove()">CANCELAR</button>
+    </div>
+  `;
+  document.body.appendChild(confirm);
+}
+
+function ejecutarDevolver(id) {
+  const reg = state.registros.find(r => r.id === id);
+  if (!reg) return;
+  const t = reg.tipo;
+  if (state.saldos[t].gastados > 0) state.saldos[t].gastados--;
+  state.registros = state.registros.filter(r => r.id !== id);
+  document.querySelectorAll('.confirm-overlay').forEach(el => el.remove());
+  save(); render();
+  toast('Día devuelto al saldo');
+}
+
+// NUEVO REGISTRO
+function abrirNuevoRegistro() {
+  const t = state.tab;
+  const color = CFG[t].color;
+  overlay(`
+    <div class="panel">
+      <div class="panel-handle"></div>
+      <div class="panel-title">Nuevo día de ${t}</div>
+      <label>MOTIVO</label>
+      <textarea id="f-motivo" rows="3" placeholder="Ej: Guardia compensada, maniobra..."></textarea>
+      <label>FECHA CONSEGUIDO</label>
+      <input type="date" id="f-cons" value="${today()}">
+      <label>FECHA GASTADO <span class="optional">(opcional)</span></label>
+      <input type="date" id="f-gast" value="">
+      <button class="btn-primary" style="background:${color}" onclick="confirmarNuevoRegistro('${t}')">GUARDAR</button>
+      <button class="btn-secondary" onclick="closeOverlay()">CANCELAR</button>
+    </div>
+  `);
+}
+
+function confirmarNuevoRegistro(t) {
+  const motivo = document.getElementById('f-motivo').value.trim();
+  const fechaConseguido = document.getElementById('f-cons').value;
+  const fechaGastado = document.getElementById('f-gast').value || null;
+  if (!motivo) { toast('Escribe un motivo', false); return; }
+  state.registros.unshift({ id: uid(), tipo: t, motivo, fechaConseguido, fechaGastado });
+  save(); closeOverlay(); render();
+  toast('Día añadido ✓');
+}
+
+// DETALLE REGISTRO
+function abrirDetalle(id) {
+  const r = state.registros.find(x => x.id === id);
+  if (!r) return;
+  const t = r.tipo;
+  const color = CFG[t].color;
+  const gastado = !!r.fechaGastado;
+  overlay(`
+    <div class="panel">
+      <div class="panel-handle"></div>
+      <div class="detail-motivo">${esc(r.motivo)}</div>
+      <div class="detail-row"><span class="detail-key">TIPO</span><span class="detail-val">${CFG[t].desc}</span></div>
+      <div class="detail-row"><span class="detail-key">CONSEGUIDO</span><span class="detail-val">${fmt(r.fechaConseguido)}</span></div>
+      <div class="detail-row"><span class="detail-key">GASTADO</span><span class="detail-val">${gastado ? fmt(r.fechaGastado) : 'Pendiente'}</span></div>
+      <div style="height:8px"></div>
+      ${!gastado ? `<button class="btn-primary" style="background:${color}" onclick="marcarGastadoHoy('${id}')">MARCAR COMO GASTADO HOY</button>` : ''}
+      <button class="btn-secondary" onclick="abrirEditarRegistro('${id}')">EDITAR</button>
+      <button class="btn-danger" onclick="confirmarEliminar('${id}')">ELIMINAR</button>
+      <button class="btn-secondary" onclick="closeOverlay()">← VOLVER</button>
+    </div>
+  `);
+}
+
+function marcarGastadoHoy(id) {
+  state.registros = state.registros.map(r => r.id===id ? {...r, fechaGastado: today()} : r);
+  save(); closeOverlay(); render();
+  toast('Marcado como gastado ✓');
+}
+
+function abrirEditarRegistro(id) {
+  const r = state.registros.find(x => x.id === id);
+  if (!r) return;
+  const t = r.tipo;
+  const color = CFG[t].color;
+  overlay(`
+    <div class="panel">
+      <div class="panel-handle"></div>
+      <div class="panel-title">Editar</div>
+      <label>MOTIVO</label>
+      <textarea id="f-motivo" rows="3">${esc(r.motivo)}</textarea>
+      <label>FECHA CONSEGUIDO</label>
+      <input type="date" id="f-cons" value="${r.fechaConseguido||''}">
+      <label>FECHA GASTADO <span class="optional">(opcional)</span></label>
+      <input type="date" id="f-gast" value="${r.fechaGastado||''}">
+      <button class="btn-primary" style="background:${color}" onclick="confirmarEditar('${id}')">GUARDAR CAMBIOS</button>
+      <button class="btn-secondary" onclick="abrirDetalle('${id}')">CANCELAR</button>
+    </div>
+  `);
+}
+
+function confirmarEditar(id) {
+  const motivo = document.getElementById('f-motivo').value.trim();
+  const fechaConseguido = document.getElementById('f-cons').value;
+  const fechaGastado = document.getElementById('f-gast').value || null;
+  if (!motivo) { toast('Escribe un motivo', false); return; }
+  state.registros = state.registros.map(r => r.id===id ? {...r, motivo, fechaConseguido, fechaGastado} : r);
+  save(); closeOverlay(); render();
+  toast('Actualizado ✓');
+}
+
+function confirmarEliminar(id) {
+  const c = document.createElement('div');
+  c.className = 'confirm-overlay';
+  c.innerHTML = `
+    <div class="confirm-box">
+      <div class="confirm-title">¿Eliminar este registro?</div>
+      <div class="confirm-sub">Esta acción no se puede deshacer.</div>
+      <button class="btn-danger" onclick="ejecutarEliminar('${id}')">ELIMINAR</button>
+      <button class="btn-secondary" onclick="this.closest('.confirm-overlay').remove()">CANCELAR</button>
+    </div>
+  `;
+  document.body.appendChild(c);
+}
+
+function ejecutarEliminar(id) {
+  state.registros = state.registros.filter(r => r.id !== id);
+  document.querySelectorAll('.confirm-overlay').forEach(el => el.remove());
+  save(); closeOverlay(); render();
+  toast('Eliminado');
+}
+
+// INIT
+load();
+render();
+</script>
+</body>
+</html>
